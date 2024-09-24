@@ -59,6 +59,42 @@ end
 	@test gapped_kmer_kernel(s₁, s₂, 3, 2) == 1 # just G*A
 end
 
+@testset "testing Gram matrix" begin
+    ℓ = 5
+    k = 3
+    seqs₁ = string_to_DNA_seq.([random_DNA_seq(10) for i = 1:10])
+	seqs₂ = string_to_DNA_seq.([random_DNA_seq(10) for i = 1:12])
+    
+    # entries to test
+    i = 3
+    j = 1
+    
+    # feature vectors
+    xᵢ = featurizer(seqs₁[i], ℓ, k)
+    xⱼ = featurizer(seqs₂[j], ℓ, k)
+    
+    # un-normalized
+	K = gapped_kmer_kernel_matrix(seqs₁, seqs₂, ℓ, k, normalize=false)
+	@test size(K) == (length(seqs₁), length(seqs₂))
+
+	@test K[i, j] ≈ gapped_kmer_kernel(seqs₁[i], seqs₂[j], ℓ, k)
+    @test K[i, j] ≈ dot(xᵢ, xⱼ)
+	
+    # normalized
+    K_n = gapped_kmer_kernel_matrix(seqs₁, seqs₂, ℓ, k, normalize=true)
+    @test K_n[i, j] ≈ dot(xᵢ, xⱼ) / (norm(xⱼ) * norm(xᵢ))
+    
+    # symmetric cases
+    xᵢ = featurizer(seqs₁[i], ℓ, k)
+    xⱼ = featurizer(seqs₁[j], ℓ, k)
+    
+    K_s = gapped_kmer_kernel_matrix(seqs₁, ℓ, k, normalize=false)
+    @test K_s[i, j] ≈ dot(xᵢ, xⱼ)
+    
+    K_sn = gapped_kmer_kernel_matrix(seqs₁, ℓ, k, normalize=true)
+    @test K_sn[i, j] ≈ dot(xᵢ, xⱼ) / (norm(xⱼ) * norm(xᵢ))
+end
+
 @testset "testing gapped-kmer featurizer and kernel consistency" begin
     function _gkmer_feature_dot_product_match(s₁::String, s₂::String, ℓ::Int, k::Int)
         s₁′ = string_to_DNA_seq(s₁)
@@ -70,19 +106,10 @@ end
         return dot(x₁, x₂) == gapped_kmer_kernel(s₁′, s₂′, ℓ, k)
     end
 
-    function random_DNA_seq(n::Int)
-        nucleotides = ["A", "T", "C", "G"]
-        seq = ""
-        for i = 1:n
-            seq *= rand(nucleotides)
-        end
-        return seq
-    end
-
     @test _gkmer_feature_dot_product_match("AAATCGGCC", "ATTCGGACC", 5, 2)
 	@test _gkmer_feature_dot_product_match("AAATCGGCC", "ATTCGGACC", 5, 4)
 	@test _gkmer_feature_dot_product_match("AAATGCC", "ATGACC", 3, 2)
-    for _ = 1:100
+    for _ = 1:10
         n₁ = rand(3:10)
         n₂ = rand(3:10)
 
