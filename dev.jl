@@ -44,10 +44,10 @@ md"## gapped k-mer feature vector"
 @doc string_to_DNA_seq
 
 # ╔═╡ 573bca78-cdf5-4ea4-8db2-561bf9dbb7cf
-seq₁ = string_to_DNA_seq("ATTGCGG")
+seq₁ = string_to_DNA_seq("ATTGGT")
 
 # ╔═╡ eedb257f-5240-44e4-b8b7-c72f58a4676a
-seq₂ = string_to_DNA_seq("AGGTGGCC")
+seq₂ = string_to_DNA_seq("GTGGT")
 
 # ╔═╡ 3656998e-f76c-475b-9d01-86484af2f488
 @doc featurizer
