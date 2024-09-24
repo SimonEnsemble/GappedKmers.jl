@@ -6,7 +6,7 @@ outputs gapped k-mer feature vector of a DNA sequence,
 which lists the number of occurences of each possible gapped k-mer in the DNA sequence.
 order follows that of `list_of_gapped_kmers` if the `gkmers` list is not provided.
 
-## arguments
+#### arguments
 * `ℓ::Int`: length of subsequence
 * `k::Int`: number of informative (non-wildcard) positions (nucleotides)
 * `seq::LongDNA`: DNA sequence
@@ -51,12 +51,12 @@ creates matrix of feature vectors of a list of DNA sequences, with the feature v
 * cols: DNA sequences
 * entries (integers): counts
 
-## arguments
+#### arguments
 * `DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}`: list of sequences for rows
 * `ℓ::Int`: length of subsequence
 * `k::Int`: number of informative (non-wildcard) positions (nucleotides)
 
-## returns
+#### returns
 * `feature_matrix::Array{Int}`
 """
 function build_feature_matrix(DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}, ℓ::Int, k::Int)
@@ -81,7 +81,7 @@ end
 
 return gapped-kmer info about a list of DNA sequences, in the form of a data frame.
 
-# arguments
+#### arguments
 * `seqs::Vector{LongDNA{2}}`: list of DNA sequences
 * `ℓ::Int`: length of subsequence
 * `k::Int`: number of informative (non-wildcard) positions (nucleotides)

@@ -5,6 +5,7 @@ using LinearAlgebra
 
 compute the gapped k-mer kernel between two input DNA sequences, which counts the number of pairings of gapped k-mers between the two input sequences.
 
+#### arguments
 * `s₁::LongDNA`: sequence 1
 * `s₂::LongDNA`: sequence 2
 * `ℓ::Int`: length of subsequence
@@ -53,7 +54,7 @@ gapped_kmer_kernel(s₁::String, s₂::String, ℓ::Int, k::Int) = gapped_kmer_k
 
 creates Gram matrix giving kernel value between every pair of DNA sequences between the two input lists of DNA sequences.
 
-# arguments
+#### arguments
 * `seqs₁::Vector{LongDNA{2}}` list of sequences for rows
 * `seqs₂::Vector{LongDNA{2}`: list of sequences for columns
 * `ℓ::Int`: length of l-mer
@@ -61,7 +62,7 @@ creates Gram matrix giving kernel value between every pair of DNA sequences betw
 * `normalize::Bool`: normalize the kernel matrix
 * `symmetric::Bool`: assume symmetric (saves computation)
 
-# returns
+#### returns
 `kernel_matrix::Matrix{Float64}`: where `kernel_matrix[i, j]` is gapped k-mer kernel between `seqs₁[i]` and `seqs₂[j]`.
 """
 function gapped_kmer_kernel_matrix(

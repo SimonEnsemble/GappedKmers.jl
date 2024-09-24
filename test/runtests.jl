@@ -63,6 +63,9 @@ end
 	
 	@test gapped_kmer_kernel(s₁, s₂, 3, 3) == 0
 	@test gapped_kmer_kernel(s₁, s₂, 3, 2) == 1 # just G*A
+	
+    # symmetry
+    @test gapped_kmer_kernel(s₁, s₂, 2, 1) == gapped_kmer_kernel(s₂, s₁, 2, 1)
 end
 
 @testset "testing Gram matrix" begin

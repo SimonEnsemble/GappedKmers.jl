@@ -2,8 +2,9 @@
     gkmer_feature_info(seqs, ℓ, k, include_absent_gkmers=false)
 
 return gapped-kmer info about a list of DNA sequences, in the form of a data frame.
+column names: DNA sequences. rows: gapped-kmers. entries: counts.
 
-# arguments
+#### arguments
 * `seqs::Vector{LongDNA{2}}`: list of DNA sequences
 * `ℓ::Int`: length of subsequence
 * `k::Int`: number of informative (non-wildcard) positions (nucleotides)
