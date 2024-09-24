@@ -129,4 +129,15 @@ end
      end
 end
 
+@testset "testing gapped kmer info" begin
+	ℓ = 4
+	k = 2
+	seq_1 = "TTCGAGC"
+	seq_2 = "TGGAAGGG"
 
+	seqs = string_to_DNA_seq.([seq_1, seq_2])
+    for cut_zeros in [true, false]
+        data = gkmer_feature_info(seqs, ℓ, k, cut_zeros)
+        @test dot(data[:, seq_1], data[:, seq_2]) == gapped_kmer_kernel(seq_1, seq_2, ℓ, k)
+    end
+end

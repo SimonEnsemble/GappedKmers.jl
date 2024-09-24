@@ -43,6 +43,10 @@ function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int)
     return kernel_value
 end
 
+gapped_kmer_kernel(s₁::String, s₂::String, ℓ::Int, k::Int) = gapped_kmer_kernel(
+    string_to_DNA_seq(s₁), string_to_DNA_seq(s₂), ℓ, k
+)
+
 """
     gapped_kmer_kernel_matrix(seqs₁, seqs₂, k, ℓ, normalize=true, symmetric=false)
     gapped_kmer_kernel_matrix(seqs, k, ℓ, normalize=true) # symmetric
