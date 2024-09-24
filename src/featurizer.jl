@@ -1,6 +1,6 @@
 """
     featurizer(seq, ℓ, k)
-    featurizer(seq, ℓ, k, gkmers) # pass list of gapped k-mers for speed
+    _featurizer(seq, ℓ, k, gkmers) # pass list of gapped k-mers for speed
 
 outputs gapped k-mer feature vector of a DNA sequence, 
 which lists the number of occurences of each possible gapped k-mer in the DNA sequence.
@@ -17,10 +17,10 @@ function featurizer(seq::LongDNA, ℓ::Int, k::Int)
     gkmers = convert_to_regex.(
         list_of_gapped_kmers(ℓ, k) # gives vector of strings
     )
-    return featurizer(seq, ℓ, k, gkmers)
+    return _featurizer(seq, ℓ, k, gkmers)
 end
 
-function featurizer(seq::LongDNA, ℓ::Int, k::Int, gkmers::Vector{BioSequences.RE.Regex{DNA}})
+function _featurizer(seq::LongDNA, ℓ::Int, k::Int, gkmers::Vector{BioSequences.RE.Regex{DNA}})
     @assert ℓ ≥ k
     n = length(seq)
 
@@ -60,7 +60,7 @@ creates matrix of feature vectors of a list of DNA sequences, with the feature v
 * `feature_matrix::Array{Int}`
 """
 function build_feature_matrix(DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}, ℓ::Int, k::Int)
-	# get list of gapped k-mers
+	# get list of gapped k-mers. pre-compute for speed.
     gkmers = convert_to_regex.(
         list_of_gapped_kmers(ℓ, k) # gives vector of strings
     )
@@ -70,7 +70,7 @@ function build_feature_matrix(DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}, �
 
     feature_matrix = zeros(Int, n_features, n_sequences)
 	for s = 1:n_sequences
-		feature_matrix[:, s] = featurizer(DNA_seqs[s], ℓ, k, gkmers)
+		feature_matrix[:, s] = _featurizer(DNA_seqs[s], ℓ, k, gkmers)
 	end
 
 	return feature_matrix

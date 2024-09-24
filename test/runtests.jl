@@ -1,14 +1,10 @@
 using Test
 
-using BioSequences
+using BioSequences, LinearAlgebra
 
 push!(LOAD_PATH, joinpath(pwd(), "src")) # run from main dir
 using GappedKmers
 
-
-###
-#   test list of gapped k-mers
-###
 @testset "testing list of gapped k-mers and conversions" begin
     k = 3
     ℓ = 6
@@ -26,3 +22,78 @@ using GappedKmers
     @test occursin(gkmer_regex, seq₁)
     @test ! occursin(gkmer_regex, seq₂)
 end
+
+@testset "testing gapped-kmer featurizer" begin
+    @test featurizer(dna"TCGGAG", 1, 1) == [1, 1, 3, 1] # [#A, #T, #G, #C]
+	@test sum(featurizer(dna"ATCGG", 2, 2)) == 4
+	@test sum(featurizer(dna"ATCGG", 2, 1)) == 4 * 2
+    
+    ℓ = 3
+    k = 2
+    my_gkmers = convert_to_regex.(["-AT", "T-T"])
+	@test sum(GappedKmers._featurizer(dna"AAAAAAAA", ℓ, k, my_gkmers)) == 0
+	@test length(GappedKmers._featurizer(dna"AAAAAAAA", ℓ, k, my_gkmers)) == length(my_gkmers)
+	@test GappedKmers._featurizer(dna"TTT", ℓ, k, my_gkmers) == [0, 1]
+	@test GappedKmers._featurizer(dna"TTTAT", ℓ, k, my_gkmers) == [1, 2]
+end
+
+@testset "testing gapped-kmer kernel" begin
+    ### test 1
+    s₁ = string_to_DNA_seq("ATT")
+	s₂ = string_to_DNA_seq("ATC")
+
+	@test gapped_kmer_kernel(s₁, s₂, 2, 2) == 1 # one match, AT
+	@test gapped_kmer_kernel(s₁, s₂, 2, 1) == 4 # A*, T*, *T x2
+
+	@test gapped_kmer_kernel(s₁, s₂, 3, 1) == 2 # two matches A**, *T*
+	@test gapped_kmer_kernel(s₁, s₂, 3, 2) == 1 # one match, AT*
+	@test gapped_kmer_kernel(s₁, s₂, 3, 3) == 0 # no full matches
+
+    ### test 2
+    s₁ = string_to_DNA_seq("TCGGAG")
+	s₂ = string_to_DNA_seq("GTAC")
+	
+	@test gapped_kmer_kernel(s₁, s₂, 2, 1) == 6
+	
+	@test gapped_kmer_kernel(s₁, s₂, 3, 3) == 0
+	@test gapped_kmer_kernel(s₁, s₂, 3, 2) == 1 # just G*A
+end
+
+@testset "testing gapped-kmer featurizer and kernel consistency" begin
+    function _gkmer_feature_dot_product_match(s₁::String, s₂::String, ℓ::Int, k::Int)
+        s₁′ = string_to_DNA_seq(s₁)
+        s₂′ = string_to_DNA_seq(s₂)
+
+        x₁ = featurizer(s₁′, ℓ, k)
+        x₂ = featurizer(s₂′, ℓ, k)
+
+        return dot(x₁, x₂) == gapped_kmer_kernel(s₁′, s₂′, ℓ, k)
+    end
+
+    function random_DNA_seq(n::Int)
+        nucleotides = ["A", "T", "C", "G"]
+        seq = ""
+        for i = 1:n
+            seq *= rand(nucleotides)
+        end
+        return seq
+    end
+
+    @test _gkmer_feature_dot_product_match("AAATCGGCC", "ATTCGGACC", 5, 2)
+	@test _gkmer_feature_dot_product_match("AAATCGGCC", "ATTCGGACC", 5, 4)
+	@test _gkmer_feature_dot_product_match("AAATGCC", "ATGACC", 3, 2)
+    for _ = 1:100
+        n₁ = rand(3:10)
+        n₂ = rand(3:10)
+
+        ℓ = rand(1:min(n₁, n₂))
+        k = rand(1:ℓ)
+
+        s₁ = random_DNA_seq(n₁)
+        s₂ = random_DNA_seq(n₂)
+
+        @test _gkmer_feature_dot_product_match(s₁, s₂, ℓ, k)
+     end
+end
+
+

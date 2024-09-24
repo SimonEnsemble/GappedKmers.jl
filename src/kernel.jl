@@ -1,14 +1,14 @@
 """
-	gapped_kmer_kernel(s₁, s₂, k, ℓ)
-compute the un-normalized gapped k-mer kernel between two input DNA sequences.
-this counts the number of pairings of gapped k-mers between the two input sequences.
+	gapped_kmer_kernel(s₁, s₂, ℓ, k)
+
+compute the gapped k-mer kernel between two input DNA sequences, which counts the number of pairings of gapped k-mers between the two input sequences.
 
 * `s₁::LongDNA`: sequence 1
 * `s₂::LongDNA`: sequence 2
-* `k::Int`: number of informative positions (number of nucleotides)
-* `ℓ::Int`: length of l-mer
+* `ℓ::Int`: length of subsequence
+* `k::Int`: number of informative (non-wildcard) positions (nucleotides)
 """
-function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, k::Int, ℓ::Int)
+function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int)
 	@assert k ≤ ℓ
 	
 	# compute length of the two sequences
