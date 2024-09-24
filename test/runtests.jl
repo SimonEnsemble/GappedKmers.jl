@@ -12,6 +12,7 @@ using GappedKmers
     @test length(gkmers) == length(unique(gkmers))
     @test length(gkmers) == number_of_gapped_kmers(ℓ, k)
     @test "A-A--A" in gkmers
+    @test "T--T-G" in gkmers
     
     gkmer = "A-T"
     gkmer_regex = convert_to_regex(gkmer)
@@ -35,6 +36,11 @@ end
 	@test length(GappedKmers._featurizer(dna"AAAAAAAA", ℓ, k, my_gkmers)) == length(my_gkmers)
 	@test GappedKmers._featurizer(dna"TTT", ℓ, k, my_gkmers) == [0, 1]
 	@test GappedKmers._featurizer(dna"TTTAT", ℓ, k, my_gkmers) == [1, 2]
+
+    # from Kyrstin's slides
+    gkmers = list_of_gapped_kmers(3, 2)
+    x = featurizer(dna"ATTCGGTGC", 3, 2)
+    @test x[gkmers .== "T-C"] == [2]
 end
 
 @testset "testing gapped-kmer kernel" begin
