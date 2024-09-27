@@ -48,12 +48,16 @@ end
     s₁ = string_to_DNA_seq("ATT")
 	s₂ = string_to_DNA_seq("ATC")
 
+	@test gapped_kmer_kernel(s₁, s₂, 1, 1) == 1 + 2
 	@test gapped_kmer_kernel(s₁, s₂, 2, 2) == 1 # one match, AT
 	@test gapped_kmer_kernel(s₁, s₂, 2, 1) == 4 # A*, T*, *T x2
 
 	@test gapped_kmer_kernel(s₁, s₂, 3, 1) == 2 # two matches A**, *T*
 	@test gapped_kmer_kernel(s₁, s₂, 3, 2) == 1 # one match, AT*
 	@test gapped_kmer_kernel(s₁, s₂, 3, 3) == 0 # no full matches
+    
+    # symmetry
+    @test gapped_kmer_kernel(s₁, s₂, 3, 1) == gapped_kmer_kernel(s₂, s₁, 3, 1)
 
     ### test 2
     s₁ = string_to_DNA_seq("TCGGAG")
@@ -66,6 +70,25 @@ end
 	
     # symmetry
     @test gapped_kmer_kernel(s₁, s₂, 2, 1) == gapped_kmer_kernel(s₂, s₁, 2, 1)
+
+    ### test 3
+    s₁ = string_to_DNA_seq("TTTAAACC")
+    s₂ = string_to_DNA_seq("TTTAATCC")
+	@test gapped_kmer_kernel(s₁, s₂, 8, 8) == 0
+	@test gapped_kmer_kernel(s₁, s₂, 8, 7) == 1
+
+    ### weighted
+    s₁ = string_to_DNA_seq("ATTCG")
+    s₂ = string_to_DNA_seq("ATTGG")
+    
+    w(i) = i <= 2 ? 1.0 : 0.0
+    @test gapped_kmer_kernel(s₁, s₂, 2, 2, w=(i, j) -> w(i) * w(j)) == 2
+    
+    w(i, j) = (i - j) == 0 ? 1.0 : 0.0
+    @test gapped_kmer_kernel(s₁, s₂, 1, 1, w=w) == 4 
+    @test gapped_kmer_kernel(s₁, s₂, 2, 2, w=w) == 2
+    @test gapped_kmer_kernel(s₁, s₂, 3, 3, w=w) == 1
+    @test gapped_kmer_kernel(s₁, s₂, 3, 2, w=w) == 3 + 1 + 1
 end
 
 @testset "testing Gram matrix" begin

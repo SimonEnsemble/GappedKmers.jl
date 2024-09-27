@@ -1,38 +1,42 @@
 using LinearAlgebra
 
 """
-    gapped_kmer_kernel(s₁, s₂, ℓ, k)
+    gapped_kmer_kernel(s₁, s₂, ℓ, k, w=(i, j) -> 1.0)
 
-compute the gapped k-mer kernel between two input DNA sequences, which counts the number of pairings of gapped k-mers between the two input sequences.
+compute the gapped k-mer kernel between two input DNA sequences, 
+which counts the number of pairings of gapped k-mers between the two input sequences.
+optionally, provide a [symmetric, positive] weight function that weighs contributions
+of gkmers in common according to their position in the sequence.
 
 #### arguments
 * `s₁::LongDNA`: sequence 1
 * `s₂::LongDNA`: sequence 2
 * `ℓ::Int`: length of subsequence
 * `k::Int`: number of informative (non-wildcard) positions (nucleotides)
+* `w::Function`: weight of how each gkmer contributes based on location in the DNA sequence. (should be symmetric)
 """
-function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int)
+function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int; w::Function=(i, j) -> 1.0)
     @assert k ≤ ℓ
     
-    kernel_value = 0 # an integer
+    kernel_value = 0.0
     
     # compute length of the two sequences
     n₁ = length(s₁)
     n₂ = length(s₂)
     
     # pre-compute contribution to kernel of l-mer pair based on # of matching positions
-    contribution = Dict(nb_matches => binomial(nb_matches, k) for nb_matches = k:ℓ)
+    contribution = Dict(nb_matches => 1.0 * binomial(nb_matches, k) for nb_matches = k:ℓ)
     
     # loop over pairs of l-mers in the two sequences
     for i in 1:(n₁+1-ℓ) # i : starting position of l-mer in s₁
-        lmer₁ = s₁[i:i+(ℓ-1)]
+        lmer₁ = @view s₁[i:i+(ℓ-1)]
         for j in 1:(n₂+1-ℓ) # j : starting position of l-mer in s₂
-            lmer₂ = s₂[j:j+(ℓ-1)]
+            lmer₂ = @view s₂[j:j+(ℓ-1)]
             # count the number of matching nucleotides
             nb_matches = count(==, lmer₁, lmer₂)
             # this pair contributes if k or more matches
             if nb_matches >= k
-                kernel_value += contribution[nb_matches]
+                kernel_value += contribution[nb_matches] * w(i, j)
             end
         end
     end
@@ -41,8 +45,8 @@ function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int)
     return kernel_value
 end
 
-gapped_kmer_kernel(s₁::String, s₂::String, ℓ::Int, k::Int) = gapped_kmer_kernel(
-    string_to_DNA_seq(s₁), string_to_DNA_seq(s₂), ℓ, k
+gapped_kmer_kernel(s₁::String, s₂::String, ℓ::Int, k::Int; w::Function=(i, j) -> 1.0) = gapped_kmer_kernel(
+    string_to_DNA_seq(s₁), string_to_DNA_seq(s₂), ℓ, k, w=w
 )
 
 """
@@ -50,6 +54,8 @@ gapped_kmer_kernel(s₁::String, s₂::String, ℓ::Int, k::Int) = gapped_kmer_k
     gapped_kmer_kernel_matrix(seqs, k, ℓ, normalize=true) # symmetric
 
 creates Gram matrix giving kernel value between every pair of DNA sequences between the two input lists of DNA sequences.
+optionally, provide a [symmetric] weight function that weighs contributions
+of gkmers in common according to their position in the sequence.
 
 #### arguments
 * `seqs₁::Vector{LongDNA{2}}` list of sequences for rows
@@ -58,6 +64,7 @@ creates Gram matrix giving kernel value between every pair of DNA sequences betw
 * `k::Int`: number of informative positions (nucleotides)
 * `normalize::Bool`: normalize the kernel matrix
 * `symmetric::Bool`: assume symmetric (saves computation)
+* `w::Function`: weight function dictating how each gkmer contributes based on location in the DNA sequence. (should be symmetric)
 
 #### returns
 `kernel_matrix::Matrix{Float64}`: where `kernel_matrix[i, j]` is gapped k-mer kernel between `seqs₁[i]` and `seqs₂[j]`.
@@ -68,7 +75,8 @@ function gapped_kmer_kernel_matrix(
     ℓ::Int,
     k::Int;
     normalize::Bool=true, 
-    symmetric::Bool=false
+    symmetric::Bool=false,
+    w::Function=(i, j) -> 1.0
 )
     # initialize Gram matrix
     matrix = zeros((length(seqs₁), length(seqs₂)))
@@ -85,7 +93,7 @@ function gapped_kmer_kernel_matrix(
                 continue # avoid computing twice
             end
             
-            matrix[i, j] = gapped_kmer_kernel(s₁, s₂, ℓ, k)
+            matrix[i, j] = gapped_kmer_kernel(s₁, s₂, ℓ, k, w=w)
             
             if symmetric
                 matrix[j, i] = matrix[i, j] # account for symmetry
