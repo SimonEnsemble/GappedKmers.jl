@@ -14,32 +14,29 @@ compute the gapped k-mer kernel between two input DNA sequences, which counts th
 function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int)
     @assert k ≤ ℓ
     
+    kernel_value = 0 # an integer
+    
     # compute length of the two sequences
     n₁ = length(s₁)
     n₂ = length(s₂)
     
-    # stores counts of number # l-mer pairs with m mis-matching nucleotides.
-    #    nb_lmer_pairs_w_m_mismatches[m + 1]: # l-mer pairs with m mismatches
-    #    (can be anywhere for 0 to ℓ mismatching nucleotides...)
-    nb_lmer_pairs_w_m_mismatches = [0 for m = 0:ℓ]
+    # pre-compute contribution to kernel of l-mer pair based on # of matching positions
+    contribution = Dict(nb_matches => binomial(nb_matches, k) for nb_matches = k:ℓ)
     
     # loop over pairs of l-mers in the two sequences
     for i in 1:(n₁+1-ℓ) # i : starting position of l-mer in s₁
         lmer₁ = s₁[i:i+(ℓ-1)]
         for j in 1:(n₂+1-ℓ) # j : starting position of l-mer in s₂
             lmer₂ = s₂[j:j+(ℓ-1)]
-            m = count(!=, lmer₁, lmer₂) # count the number of mismatches
-            nb_lmer_pairs_w_m_mismatches[m+1] += 1 # record finding
+            # count the number of matching nucleotides
+            nb_matches = count(==, lmer₁, lmer₂)
+            # this pair contributes if k or more matches
+            if nb_matches >= k
+                kernel_value += contribution[nb_matches]
+            end
         end
     end
     
-    # compute kernel
-    kernel_value = 0 # an integer
-    for m = 0:(ℓ-k) # m ≤ (ℓ - k) contributes to kernel
-        # TODO: can make faster by pre-computing binomial(ℓ-m, k)
-        kernel_value += nb_lmer_pairs_w_m_mismatches[m+1] * binomial(ℓ-m, k)
-    end
-
     # return # pairs of gapped-k-mers between the two input sequences
     return kernel_value
 end
