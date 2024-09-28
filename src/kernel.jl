@@ -25,7 +25,8 @@ function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int; w::F
     n₂ = length(s₂)
     
     # pre-compute contribution to kernel of l-mer pair based on # of matching positions
-    contribution = Dict(nb_matches => 1.0 * binomial(nb_matches, k) for nb_matches = k:ℓ)
+    # contribution[nb_matches - k + 1] gives contribution for nb_matches matches
+    contribution = [1.0 * binomial(nb_matches, k) for nb_matches = k:ℓ]
     
     # loop over pairs of l-mers in the two sequences
     for i in 1:(n₁+1-ℓ) # i : starting position of l-mer in s₁
@@ -36,7 +37,7 @@ function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int; w::F
             nb_matches = count(==, lmer₁, lmer₂)
             # this pair contributes if k or more matches
             if nb_matches >= k
-                kernel_value += contribution[nb_matches] * w(i, j)
+                kernel_value += contribution[1 + nb_matches - k] * w(i, j)
             end
         end
     end
