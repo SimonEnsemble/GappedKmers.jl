@@ -11,6 +11,7 @@ using GappedKmers
     gkmers = list_of_gapped_kmers(ℓ, k)
     @test length(gkmers) == length(unique(gkmers))
     @test length(gkmers) == number_of_gapped_kmers(ℓ, k)
+    @test all([sum([n for n in gkmer] .== '-') for gkmer in gkmers] .== ℓ - k)
     @test "A-A--A" in gkmers
     @test "T--T-G" in gkmers
     
@@ -25,21 +26,21 @@ using GappedKmers
 end
 
 @testset "testing gapped-kmer featurizer" begin
-    @test featurizer(dna"TCGGAG", 1, 1) == [1, 1, 3, 1] # [#A, #T, #G, #C]
-	@test sum(featurizer(dna"ATCGG", 2, 2)) == 4
-	@test sum(featurizer(dna"ATCGG", 2, 1)) == 4 * 2
+    @test gkmer_feature(dna"TCGGAG", 1, 1) == [1, 1, 3, 1] # [#A, #T, #G, #C]
+	@test sum(gkmer_feature(dna"ATCGG", 2, 2)) == 4
+	@test sum(gkmer_feature(dna"ATCGG", 2, 1)) == 4 * 2
     
     ℓ = 3
     k = 2
     my_gkmers = convert_to_regex.(["-AT", "T-T"])
-	@test sum(GappedKmers._featurizer(dna"AAAAAAAA", ℓ, k, my_gkmers)) == 0
-	@test length(GappedKmers._featurizer(dna"AAAAAAAA", ℓ, k, my_gkmers)) == length(my_gkmers)
-	@test GappedKmers._featurizer(dna"TTT", ℓ, k, my_gkmers) == [0, 1]
-	@test GappedKmers._featurizer(dna"TTTAT", ℓ, k, my_gkmers) == [1, 2]
+	@test sum(GappedKmers._gkmer_feature(dna"AAAAAAAA", ℓ, k, my_gkmers)) == 0
+	@test length(GappedKmers._gkmer_feature(dna"AAAAAAAA", ℓ, k, my_gkmers)) == length(my_gkmers)
+	@test GappedKmers._gkmer_feature(dna"TTT", ℓ, k, my_gkmers) == [0, 1]
+	@test GappedKmers._gkmer_feature(dna"TTTAT", ℓ, k, my_gkmers) == [1, 2]
 
     # from Kyrstin's slides
     gkmers = list_of_gapped_kmers(3, 2)
-    x = featurizer(dna"ATTCGGTGC", 3, 2)
+    x = gkmer_feature(dna"ATTCGGTGC", 3, 2)
     @test x[gkmers .== "T-C"] == [2]
 end
 
@@ -102,8 +103,8 @@ end
     j = 1
     
     # feature vectors
-    xᵢ = featurizer(seqs₁[i], ℓ, k)
-    xⱼ = featurizer(seqs₂[j], ℓ, k)
+    xᵢ = gkmer_feature(seqs₁[i], ℓ, k)
+    xⱼ = gkmer_feature(seqs₂[j], ℓ, k)
     
     # un-normalized
 	K = gapped_kmer_kernel_matrix(seqs₁, seqs₂, ℓ, k, normalize=false)
@@ -117,11 +118,14 @@ end
     @test K_n[i, j] ≈ dot(xᵢ, xⱼ) / (norm(xⱼ) * norm(xᵢ))
     
     # symmetric cases
-    xᵢ = featurizer(seqs₁[i], ℓ, k)
-    xⱼ = featurizer(seqs₁[j], ℓ, k)
+    xᵢ = gkmer_feature(seqs₁[i], ℓ, k)
+    xⱼ = gkmer_feature(seqs₁[j], ℓ, k)
     
     K_s = gapped_kmer_kernel_matrix(seqs₁, ℓ, k, normalize=false)
     @test K_s[i, j] ≈ dot(xᵢ, xⱼ)
+    
+    X = gkmer_feature_matrix(seqs₁, ℓ, k)
+    @test X' * X == K_s
     
     K_sn = gapped_kmer_kernel_matrix(seqs₁, ℓ, k, normalize=true)
     @test K_sn[i, j] ≈ dot(xᵢ, xⱼ) / (norm(xⱼ) * norm(xᵢ))
@@ -132,8 +136,8 @@ end
         s₁′ = string_to_DNA_seq(s₁)
         s₂′ = string_to_DNA_seq(s₂)
 
-        x₁ = featurizer(s₁′, ℓ, k)
-        x₂ = featurizer(s₂′, ℓ, k)
+        x₁ = gkmer_feature(s₁′, ℓ, k)
+        x₂ = gkmer_feature(s₂′, ℓ, k)
 
         return dot(x₁, x₂) == gapped_kmer_kernel(s₁′, s₂′, ℓ, k)
     end
@@ -165,5 +169,6 @@ end
     for cut_zeros in [true, false]
         data = gkmer_feature_info(seqs, ℓ, k, cut_zeros)
         @test dot(data[:, seq_1], data[:, seq_2]) == gapped_kmer_kernel(seq_1, seq_2, ℓ, k)
+        @test "TT--" in data[:, "gapped k-mer"]
     end
 end

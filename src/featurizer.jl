@@ -1,26 +1,27 @@
 """
-    featurizer(seq, ℓ, k)
-    _featurizer(seq, ℓ, k, gkmers) # pass list of gapped k-mers for speed
+    x = gkmer_feature(seq, ℓ, k)
+    x = _gkmer_feature(seq, ℓ, k, gkmers) # pass list of gapped k-mers for speed
 
-outputs gapped k-mer feature vector of a DNA sequence, 
-which lists the number of occurences of each possible gapped k-mer in the DNA sequence.
+constructs the gapped k-mer feature vector of a DNA sequence.
+this vector lists the number of occurences of each possible gapped k-mer in the DNA sequence.
 order follows that of `list_of_gapped_kmers` if the `gkmers` list is not provided.
+i.e. `x[i]` is count of gapped k-mer `list_of_gapped_kmers(ℓ, k)[i]` in `seq`.
 
 #### arguments
-* `ℓ::Int`: length of subsequence
-* `k::Int`: number of informative (non-wildcard) positions (nucleotides)
-* `seq::LongDNA`: DNA sequence
-* `gkmers::Vector{Regex{DNA}}`: list of gapped k-mers to search for (gives corresponding entries)
+* `ℓ::Int`: length of subsequence in gkmer
+* `k::Int`: number of informative (non-wildcard) positions (nucleotides) in gkmer
+* `seq::LongDNA`: DNA sequence we wish to featurize
+* `gkmers::Vector{Regex{DNA}}`: (optional) list of gapped k-mers to search for (gives corresponding entries)
 """
-function featurizer(seq::LongDNA, ℓ::Int, k::Int)
+function gkmer_feature(seq::LongDNA, ℓ::Int, k::Int)
 	# get list of gapped k-mers
     gkmers = convert_to_regex.(
         list_of_gapped_kmers(ℓ, k) # gives vector of strings
     )
-    return _featurizer(seq, ℓ, k, gkmers)
+    return _gkmer_feature(seq, ℓ, k, gkmers)
 end
 
-function _featurizer(seq::LongDNA, ℓ::Int, k::Int, gkmers::Vector{BioSequences.RE.Regex{DNA}})
+function _gkmer_feature(seq::LongDNA, ℓ::Int, k::Int, gkmers::Vector{BioSequences.RE.Regex{DNA}})
     @assert ℓ ≥ k
     n = length(seq)
 
@@ -44,33 +45,30 @@ function _featurizer(seq::LongDNA, ℓ::Int, k::Int, gkmers::Vector{BioSequences
 end
 
 """
-	build_feature_matrix(DNA_seqs, ℓ, k)
+	feature_matrix = gkmer_feature_matrix(DNA_seqs, ℓ, k)
 
 creates matrix of feature vectors of a list of DNA sequences, with the feature vectors in the columns.
-* rows" gapped k-mer's
-* cols: DNA sequences
-* entries (integers): counts
+* rows: gkmer's
+* columns: DNA sequences
+* entries (integers): counts of gkmer's in the DNA sequences
 
 #### arguments
-* `DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}`: list of sequences for rows
-* `ℓ::Int`: length of subsequence
-* `k::Int`: number of informative (non-wildcard) positions (nucleotides)
+* `DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}`: list of DNA sequences we wish to featurize
+* `ℓ::Int`: length of subsequence of gkmers
+* `k::Int`: number of informative (non-wildcard) positions (nucleotides) of gkmers
 
 #### returns
 * `feature_matrix::Array{Int}`
 """
-function build_feature_matrix(DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}, ℓ::Int, k::Int)
+function gkmer_feature_matrix(DNA_seqs::Vector{LongSequence{DNAAlphabet{2}}}, ℓ::Int, k::Int)
 	# get list of gapped k-mers. pre-compute for speed.
     gkmers = convert_to_regex.(
         list_of_gapped_kmers(ℓ, k) # gives vector of strings
     )
 
-    n_sequences = length(DNA_seqs)
-    n_features = length(gkmers)
-
-    feature_matrix = zeros(Int, n_features, n_sequences)
-	for s = 1:n_sequences
-		feature_matrix[:, s] = _featurizer(DNA_seqs[s], ℓ, k, gkmers)
+    feature_matrix = zeros(Int, length(gkmers), length(DNA_seqs))
+	for s = 1:length(DNA_seqs)
+		feature_matrix[:, s] = _gkmer_feature(DNA_seqs[s], ℓ, k, gkmers)
 	end
 
 	return feature_matrix
@@ -82,10 +80,10 @@ end
 return gapped-kmer info about a list of DNA sequences, in the form of a data frame.
 
 #### arguments
-* `seqs::Vector{LongDNA{2}}`: list of DNA sequences
-* `ℓ::Int`: length of subsequence
-* `k::Int`: number of informative (non-wildcard) positions (nucleotides)
-* `include_absent_gkmers::Bool`: include rows where no sequence had that gapped k-mer.
+* `seqs::Vector{LongDNA{2}}`: list of DNA sequences to featurize
+* `ℓ::Int`: length of subsequence of gkmers
+* `k::Int`: number of informative (non-wildcard) positions (nucleotides) of gkmers
+* `include_absent_gkmers::Bool=false`: include rows where no sequence had that gkmer
 """
 function gkmer_feature_info(seqs::Vector{LongDNA{2}}, ℓ::Int, k::Int, include_absent_gkmers::Bool=false)
     # get list of gapped k-mers
@@ -99,7 +97,7 @@ function gkmer_feature_info(seqs::Vector{LongDNA{2}}, ℓ::Int, k::Int, include_
 
     # compute features; append to data frame
     for seq in seqs
-        insertcols!(data, String(seq) => _featurizer(seq, ℓ, k, gkmers))
+        insertcols!(data, String(seq) => _gkmer_feature(seq, ℓ, k, gkmers))
     end
     
     if include_absent_gkmers

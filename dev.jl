@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.20.1
 
 using Markdown
 using InteractiveUtils
@@ -7,14 +7,26 @@ using InteractiveUtils
 # ╔═╡ 6e289366-7790-11ef-2381-2d4900e853e4
 begin
 	import Pkg; Pkg.activate()
+
 	using Revise
 	
 	push!(LOAD_PATH, joinpath(pwd(), "src"))
-	using GappedKmers, BioSequences, Test, DataFrames, BenchmarkTools, LinearAlgebra, CairoMakie
+	using GappedKmers, BioSequences, Test, DataFrames, 
+		  BenchmarkTools, LinearAlgebra, CairoMakie, PlutoUI
 end
 
+# ╔═╡ e8c54f94-1d7a-4ac7-a31e-9d23c7654270
+TableOfContents()
+
 # ╔═╡ c9d45f38-cdb8-4d40-a5e7-6d9cabe33119
-md"# `GappedKmers.jl`"
+md"# 🧬 `GappedKmers.jl`
+
+our Julia package `GappedKmers.jl` is intended for featurizing DNA sequences using gapped k-mers, for machine learning tasks on DNA sequences. this Pluto notebook illustrates the capabilities of `GappedKmers.jl` and serves as documentation.
+
+!!! reference
+	to learn about gapped k-mers for describing DNA sequences, see:
+	> M. Ghandi, D. Lee, Mohammad-Noori, M. Beer. Enhanced Regulatory Sequence Prediction Using Gapped k-mer Features. _PLoS Computational Biology_. (2014) [link.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003711)
+"
 
 # ╔═╡ 0caebb26-c638-4379-a139-e5c440c0d700
 md"## list the gapped k-mers"
@@ -23,13 +35,13 @@ md"## list the gapped k-mers"
 @doc list_of_gapped_kmers
 
 # ╔═╡ 7c3a61bb-234f-49dc-ad11-685c8d8647ac
-ℓ = 3
+ℓ = 3 # length of subsequence
 
 # ╔═╡ 1a970302-cab9-4a27-9f57-9e97d9647768
-k = 2
+k = 2 # number of informative (non-wildcard positions)
 
 # ╔═╡ 4e5b2c7c-6b43-4708-b733-b52ea35312a3
-list_of_gapped_kmers(ℓ, k)
+gkmers = list_of_gapped_kmers(ℓ, k)
 
 # ╔═╡ 4ad81401-84d7-4043-bb47-9066c14ee1e2
 @doc number_of_gapped_kmers
@@ -50,13 +62,13 @@ seq₁ = string_to_DNA_seq("ATTGGT")
 seq₂ = string_to_DNA_seq("GTGGT")
 
 # ╔═╡ 3656998e-f76c-475b-9d01-86484af2f488
-@doc featurizer
+@doc gkmer_feature
 
 # ╔═╡ a88fa7db-d8ea-46d2-9637-2b9dff33f36e
-x₁ = featurizer(seq₁, ℓ, k)
+x₁ = gkmer_feature(seq₁, ℓ, k)
 
 # ╔═╡ 3efd8b19-ab3d-4da5-a0b3-3781a82d6594
-x₂ = featurizer(seq₂, ℓ, k)
+x₂ = gkmer_feature(seq₂, ℓ, k)
 
 # ╔═╡ 398f2a54-1083-4d74-a99c-2df7c1495dcb
 data = gkmer_feature_info([seq₁, seq₂], ℓ, k, false)
@@ -71,13 +83,10 @@ md"## gapped k-mer kernel"
 gapped_kmer_kernel(seq₁, seq₂, ℓ, k)
 
 # ╔═╡ 5d053946-5666-41aa-ae73-3c69090d2173
-dot(x₁, x₂)
-
-# ╔═╡ f605fcff-cfb1-4946-832e-9230c1ab6c28
-seq_1 = string_to_DNA_seq(random_DNA_seq(10))
+dot(x₁, x₂) # gives same as dot product between features
 
 # ╔═╡ be742de2-cf23-4947-8d32-497fa0f391b6
-md"## Gram (kernel) matrix"
+md"## kernal matrix"
 
 # ╔═╡ d0eb6410-3a30-448e-b8cf-ae54e7047844
 seqs₁ = string_to_DNA_seq.([random_DNA_seq(10) for i = 1:10])
@@ -111,8 +120,21 @@ begin
 	fig
 end
 
+# ╔═╡ a083e6db-dcf2-42dc-90cf-23654f5be505
+md"### Gram matrix"
+
+# ╔═╡ 97c40301-4311-4bd0-b029-d1caf4db3701
+G = gapped_kmer_kernel_matrix(seqs₁, ℓ, k, normalize=false)
+
+# ╔═╡ 742409e0-6735-4316-abe6-a1f3ccc0f19e
+X = gkmer_feature_matrix(seqs₁, ℓ, k)
+
+# ╔═╡ 5f7bbe4f-05fd-42aa-9bff-0aed310e3972
+all(X' * X .== G)
+
 # ╔═╡ Cell order:
 # ╠═6e289366-7790-11ef-2381-2d4900e853e4
+# ╠═e8c54f94-1d7a-4ac7-a31e-9d23c7654270
 # ╟─c9d45f38-cdb8-4d40-a5e7-6d9cabe33119
 # ╟─0caebb26-c638-4379-a139-e5c440c0d700
 # ╠═36ed8d7b-6723-4869-a336-5a15d6ea4078
@@ -133,7 +155,6 @@ end
 # ╠═5a302c7b-c71b-40dc-9f2c-f718b0095758
 # ╠═2165106a-2f4a-42fb-998b-f349857798e7
 # ╠═5d053946-5666-41aa-ae73-3c69090d2173
-# ╠═f605fcff-cfb1-4946-832e-9230c1ab6c28
 # ╟─be742de2-cf23-4947-8d32-497fa0f391b6
 # ╠═d0eb6410-3a30-448e-b8cf-ae54e7047844
 # ╠═a9e67ae5-548a-421d-b339-dfbba6e09815
@@ -142,3 +163,7 @@ end
 # ╠═e15cc2cc-8f40-4d2b-a4ee-a13d1c03307f
 # ╠═81cf013e-6b9d-4ec7-b185-d652c0df90b4
 # ╠═a54b25dc-928e-4eb6-ad7b-ae2d5c62d040
+# ╟─a083e6db-dcf2-42dc-90cf-23654f5be505
+# ╠═97c40301-4311-4bd0-b029-d1caf4db3701
+# ╠═742409e0-6735-4316-abe6-a1f3ccc0f19e
+# ╠═5f7bbe4f-05fd-42aa-9bff-0aed310e3972

@@ -3,17 +3,18 @@ using LinearAlgebra
 """
     gapped_kmer_kernel(s₁, s₂, ℓ, k, w=(i, j) -> 1.0)
 
-compute the gapped k-mer kernel between two input DNA sequences, 
-which counts the number of pairings of gapped k-mers between the two input sequences.
-optionally, provide a [symmetric, positive] weight function that weighs contributions
-of gkmers in common according to their position in the sequence.
+compute the gapped k-mer kernel between two input DNA sequences.
+this kernel counts the number of pairings of gapped k-mers between the two input sequences.
+
+optionally, provide a [symmetric, positive] weight function `w` that weighs contributions
+of gkmers in common according to their positions in the sequence.
 
 #### arguments
 * `s₁::LongDNA`: sequence 1
 * `s₂::LongDNA`: sequence 2
 * `ℓ::Int`: length of subsequence
 * `k::Int`: number of informative (non-wildcard) positions (nucleotides)
-* `w::Function`: weight of how each gkmer contributes based on location in the DNA sequence. (should be symmetric)
+* `w::Function`: (optional) weight of how each gkmer contributes based on location in the DNA sequence. 
 """
 function gapped_kmer_kernel(s₁::LongDNA, s₂::LongDNA, ℓ::Int, k::Int; w::Function=(i, j) -> 1.0)
     @assert k ≤ ℓ
@@ -54,9 +55,13 @@ gapped_kmer_kernel(s₁::String, s₂::String, ℓ::Int, k::Int; w::Function=(i,
     gapped_kmer_kernel_matrix(seqs₁, seqs₂, k, ℓ, normalize=true, symmetric=false)
     gapped_kmer_kernel_matrix(seqs, k, ℓ, normalize=true) # symmetric
 
-creates Gram matrix giving kernel value between every pair of DNA sequences between the two input lists of DNA sequences.
+computes kernel matrix giving kernel value between every pair of DNA sequences 
+made between the two input lists of DNA sequences.
+
+if one list of sequences is provided, compute the Gram matrix.
+
 optionally, provide a [symmetric] weight function that weighs contributions
-of gkmers in common according to their position in the sequence.
+of gkmers in common according to their positions in the sequences.
 
 #### arguments
 * `seqs₁::Vector{LongDNA{2}}` list of sequences for rows
@@ -65,7 +70,7 @@ of gkmers in common according to their position in the sequence.
 * `k::Int`: number of informative positions (nucleotides)
 * `normalize::Bool`: normalize the kernel matrix
 * `symmetric::Bool`: assume symmetric (saves computation)
-* `w::Function`: weight function dictating how each gkmer contributes based on location in the DNA sequence. (should be symmetric)
+* `w::Function`: (optional) weight function dictating how each gkmer contributes based on location in the DNA sequence.
 
 #### returns
 `kernel_matrix::Matrix{Float64}`: where `kernel_matrix[i, j]` is gapped k-mer kernel between `seqs₁[i]` and `seqs₂[j]`.
