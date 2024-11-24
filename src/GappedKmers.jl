@@ -1,6 +1,6 @@
 module GappedKmers
 
-using BioSequences, IterTools, CairoMakie, DataFrames
+using BioSequences, IterTools, DataFrames
 
 include("list_of_gapped_kmers.jl")
 include("featurizer.jl")
