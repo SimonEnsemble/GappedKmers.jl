@@ -1,5 +1,6 @@
 name = "GappedKmers"
 authors = ["Datanagan, Kyrstin <mcquiddk@oregonstate.edu>", "Cory Simon <cory.simon@oregonstate.edu>"]
+uuid = "2048ae2c-aa03-11ef-10c5-b56aa5cb0ed2"
 version = "0.0.1"
 
 [deps]
