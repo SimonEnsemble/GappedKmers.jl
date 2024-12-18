@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.1
+# v0.20.0
 
 using Markdown
 using InteractiveUtils
@@ -27,6 +27,10 @@ our Julia package `GappedKmers.jl` is intended for featurizing DNA sequences usi
 	to learn about gapped k-mers for describing DNA sequences, see:
 	> M. Ghandi, D. Lee, Mohammad-Noori, M. Beer. Enhanced Regulatory Sequence Prediction Using Gapped k-mer Features. _PLoS Computational Biology_. (2014) [link.](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1003711)
 "
+
+# ╔═╡ 4cfd08b9-4a99-4914-b29e-5bc57bb73653
+md"!!! note
+    we rely on [BioSequences.jl](https://github.com/BioJulia/BioSequences.jl) to represent our DNA sequences and search for k-mers with mis-matches allowed."
 
 # ╔═╡ 0caebb26-c638-4379-a139-e5c440c0d700
 md"## list the gapped k-mers"
@@ -86,7 +90,7 @@ gapped_kmer_kernel(seq₁, seq₂, ℓ, k)
 dot(x₁, x₂) # gives same as dot product between features
 
 # ╔═╡ be742de2-cf23-4947-8d32-497fa0f391b6
-md"## kernal matrix"
+md"## kernel matrix"
 
 # ╔═╡ d0eb6410-3a30-448e-b8cf-ae54e7047844
 seqs₁ = string_to_DNA_seq.([random_DNA_seq(10) for i = 1:10])
@@ -132,10 +136,28 @@ X = gkmer_feature_matrix(seqs₁, ℓ, k)
 # ╔═╡ 5f7bbe4f-05fd-42aa-9bff-0aed310e3972
 all(X' * X .== G)
 
+# ╔═╡ 658d68b1-eeba-4b63-842c-b76cf10c08e2
+md"### benchmarking"
+
+# ╔═╡ 2e3f544d-2578-4f0d-9002-75395fb92f8e
+md"using `BenchmarkTools.jl` to measure the elapsed time to compute the Gram matrix between all pairs of 1000 length-10 DNA sequences"
+
+# ╔═╡ e6de911e-f596-4a41-9dd7-d526d65850bd
+begin
+	BenchmarkTools.DEFAULT_PARAMETERS.seconds = 60
+	benchmarking_seqs = string_to_DNA_seq.([random_DNA_seq(10) for i = 1:1000])
+end
+
+# ╔═╡ 148ab4c2-ae8b-4772-b7eb-eaae8b5fe3ad
+@benchmark gapped_kmer_kernel_matrix(
+		benchmarking_seqs, benchmarking_seqs, ℓ, k
+	)
+
 # ╔═╡ Cell order:
 # ╠═6e289366-7790-11ef-2381-2d4900e853e4
 # ╠═e8c54f94-1d7a-4ac7-a31e-9d23c7654270
 # ╟─c9d45f38-cdb8-4d40-a5e7-6d9cabe33119
+# ╟─4cfd08b9-4a99-4914-b29e-5bc57bb73653
 # ╟─0caebb26-c638-4379-a139-e5c440c0d700
 # ╠═36ed8d7b-6723-4869-a336-5a15d6ea4078
 # ╠═7c3a61bb-234f-49dc-ad11-685c8d8647ac
@@ -167,3 +189,7 @@ all(X' * X .== G)
 # ╠═97c40301-4311-4bd0-b029-d1caf4db3701
 # ╠═742409e0-6735-4316-abe6-a1f3ccc0f19e
 # ╠═5f7bbe4f-05fd-42aa-9bff-0aed310e3972
+# ╟─658d68b1-eeba-4b63-842c-b76cf10c08e2
+# ╟─2e3f544d-2578-4f0d-9002-75395fb92f8e
+# ╠═e6de911e-f596-4a41-9dd7-d526d65850bd
+# ╠═148ab4c2-ae8b-4772-b7eb-eaae8b5fe3ad
