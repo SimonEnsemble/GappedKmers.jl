@@ -7,4 +7,4 @@ this is a Julia package to:
 
 ✔️ the package is reasonably tested. see `tests/runtests.jl`.
 
-📗 the functions have doc strings. capabilities are outlined and doc strings for each function are printed in the Pluto notebook, `dev.jl`, rendered [here](https://simonensemble.github.io/GappedKmers.jl/dev.html).
+📗 the functions have doc strings. capabilities are outlined and doc strings for each function are printed in the Pluto notebook, `dev.jl`, rendered [here](https://github.com/SimonEnsemble/GappedKmers.jl/blob/main/dev.html).
